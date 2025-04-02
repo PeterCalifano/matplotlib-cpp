@@ -33,7 +33,7 @@
 
 # Build
 /examples/build/*
-build/*
+*build*
 
 # vim temp files
 *.sw*

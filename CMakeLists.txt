@@ -1,10 +1,30 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
+
+# Set compiler to g++-11)
+message(STATUS "NOTE: ensure you're using a compiler version that matches the precompiled Python libraries! For this build g++-11 is recommended.")
+
+set(CMAKE_CXX_COMPILER "g++-11")
+set(CMAKE_C_COMPILE "gcc-11")
+
 project(matplotlib_cpp LANGUAGES CXX)
 
 include(GNUInstallDirs)
 set(PACKAGE_NAME matplotlib_cpp)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/${PACKAGE_NAME}/cmake)
 
+# Set C++ standard to C++11
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Handle virtualenv or conda envs
+if(DEFINED ENV{CONDA_PREFIX})
+    # Let CMake know to look under the conda env directory
+    set(Python3_ROOT_DIR "$ENV{CONDA_PREFIX}")
+elseif(DEFINED ENV{VIRTUAL_ENV})
+    set(Python3_ROOT_DIR "$ENV{VIRTUAL_ENV}")
+else()
+  message(WARNING "Neither CONDA_PREFIX nor VIRTUAL_ENV is defined. Python3_ROOT_DIR will use system environment! Make sure this is intentional.")
+endif()
 
 # Library target
 add_library(matplotlib_cpp INTERFACE)
@@ -18,12 +38,16 @@ target_compile_features(matplotlib_cpp INTERFACE
 )
 # TODO: Use `Development.Embed` component when requiring cmake >= 3.18
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+# Print location of python3
+message(STATUS "Python3 found at: ${Python3_EXECUTABLE}")
+
 target_link_libraries(matplotlib_cpp INTERFACE
   Python3::Python
   Python3::Module
 )
 find_package(Python3 COMPONENTS NumPy)
 if(Python3_NumPy_FOUND)
+  message(STATUS "Found NumPy: ${Python3_NumPy_INCLUDE_DIRS}")
   target_link_libraries(matplotlib_cpp INTERFACE
     Python3::NumPy
   )
@@ -35,6 +59,10 @@ install(
   EXPORT install_targets
 )
 
+# Print C++ build options
+message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "C++ compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "C++ compiler flags: ${CMAKE_CXX_FLAGS}")
 
 # Examples
 add_executable(minimal examples/minimal.cpp)
